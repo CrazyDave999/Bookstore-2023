@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <regex>
 #include "book.hpp"
 #include "account.hpp"
 #include "log.hpp"
@@ -22,7 +23,7 @@ int main() {
     std::string line;
     while (std::getline(std::cin, line)) {
         std::stringstream ss(line);
-        if (line.find('\t') != std::string::npos) {
+        if (std::regex_search(line, std::regex{"[\t\v\f]"})) {
             std::cout << "Invalid\n";
             continue;
         }
