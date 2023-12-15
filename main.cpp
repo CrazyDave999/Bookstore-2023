@@ -40,12 +40,13 @@ int main() {
         }
 
         bool flag = false;
-
         if (!check_input(op, str_args)) {
             flag = false;
         } else {
             if (op == "exit" || op == "quit") {
                 break;
+            } else if (op[0] == '#') {
+                continue;
             } else if (op == "su") {
                 if (args.size() == 1) {
                     flag = asys.login(args[0], "$");

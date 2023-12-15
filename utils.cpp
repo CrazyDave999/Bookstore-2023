@@ -107,6 +107,8 @@ namespace CrazyDave {
     bool check_input(const std::string &op, const std::vector<std::string> &args) {
         if (op == "exit" || op == "quit") {
             return args.empty();
+        } else if (op[0] == '#') {
+            return true;
         } else if (op == "su") {
             if (args.size() == 1) {
                 if (!check_arg("UserID", args[0])) {
