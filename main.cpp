@@ -22,7 +22,10 @@ int main() {
     std::string line;
     while (std::getline(std::cin, line)) {
         std::stringstream ss(line);
-
+        if (line.find('\t') != std::string::npos) {
+            std::cout << "Invalid\n";
+            continue;
+        }
         std::string op, arg;
         std::vector<std::string> str_args;
 
