@@ -157,7 +157,7 @@ namespace CrazyDave {
     bool BookSystem::modify(const std::vector<const char *> &args) {
         if (!check_privilege(3))return false;
         if (!is_selected())return false;
-        if (args.empty())return false;
+//        if (args.empty())return false;
         auto ISBN = get_current_select();
         auto arr = ISBN_list.find(ISBN);
         if (arr.empty())return false;
@@ -171,21 +171,16 @@ namespace CrazyDave {
             auto sp_arr = split(arg, "=\"");
             String<10> op(sp_arr[0]);
             if (op == "-ISBN") {
-                if (pISBN == "$" && strlen(sp_arr[1]) <= 20 && book.ISBN != sp_arr[1]) pISBN = sp_arr[1];
+                if (book.ISBN != sp_arr[1]) pISBN = sp_arr[1];
                 else return false;
             } else if (op == "-name") {
-                if (name == "$" && strlen(sp_arr[1]) <= 60)name = sp_arr[1];
-                else return false;
+                name = sp_arr[1];
             } else if (op == "-author") {
-                if (author == "$" && strlen(sp_arr[1]) <= 60)author = sp_arr[1];
-                else return false;
+                author = sp_arr[1];
             } else if (op == "-keyword") {
-                if (keywords == "$" && strlen(sp_arr[1]) <= 60) {
-                    keywords = sp_arr[1];
-                } else return false;
+                keywords = sp_arr[1];
             } else if (op == "-price") {
-                if (price == 0 && strlen(sp_arr[1]) <= 13)price = strtod(sp_arr[1], nullptr);
-                else return false;
+                price = strtod(sp_arr[1], nullptr);
             }
         }
         if (pISBN != "$") {
@@ -194,14 +189,14 @@ namespace CrazyDave {
                 return false; // 冲突
             }
         }
-        std::unordered_set<std::string> us;
+//        std::unordered_set<std::string> us;
         auto kw_vec = split(keywords, "|");
-        for (auto &str: kw_vec) {
-            if (us.count(str)) {
-                return false; // 重复
-            }
-            us.insert(str);
-        }
+//        for (auto &str: kw_vec) {
+//            if (us.count(str)) {
+//                return false; // 重复
+//            }
+//            us.insert(str);
+//        }
 
         remove_book(book);
         if (pISBN != "$") {

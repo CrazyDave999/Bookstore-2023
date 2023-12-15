@@ -10,6 +10,8 @@
 #include <cstddef>
 #include <cassert>
 #include <list>
+#include <regex>
+#include <unordered_set>
 
 namespace CrazyDave {
     template<size_t len>
@@ -83,6 +85,11 @@ namespace CrazyDave {
     bool is_numeric_string(const char *str);
 
     bool is_interger_string(const char *str);
+
+    bool check_arg(const std::string &type, const std::string &arg);
+
+    bool check_input(const std::string &op, const std::vector<std::string> &args);
+
 
     using std::fstream;
 
