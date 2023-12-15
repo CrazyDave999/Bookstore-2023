@@ -120,8 +120,12 @@ namespace CrazyDave {
             }
         } else {
             auto arr = ISBN_list.find_all();
-            for (auto &book: arr) {
-                std::cout << book;
+            if (arr.empty()) {
+                std::cout << '\n';
+            }else {
+                for (auto &book: arr) {
+                    std::cout << book;
+                }
             }
         }
         return true;
