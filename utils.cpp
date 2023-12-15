@@ -72,7 +72,7 @@ namespace CrazyDave {
         } else if (type == "Username") {
             patterns.emplace_back("[\\x20-\\x7E]{1,30}");
         } else if (type == "Privilege") {
-            patterns.emplace_back("^[0-9]{1}$");
+            patterns.emplace_back("[137]");
         } else if (type == "ISBN") {
             patterns.emplace_back("[\\x20-\\x7E]{1,20}");
         } else if (type == "BookName" || type == "Author") {

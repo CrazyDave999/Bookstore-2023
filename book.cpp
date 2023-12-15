@@ -219,7 +219,7 @@ namespace CrazyDave {
     bool BookSystem::import(int quantity, double total_cost) {
         if (!check_privilege(3))return false;
         if (quantity <= 0)return false;
-        if (total_cost < 0)return false;
+        if (total_cost <= 0)return false;
         if (!is_selected())return false;
         auto book = ISBN_list.find(get_current_select())[0];
         remove_book(book);
