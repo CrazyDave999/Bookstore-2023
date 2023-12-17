@@ -30,40 +30,6 @@ namespace CrazyDave {
         return std::move(tokens);
     }
 
-    bool is_numeric_string(const char *str) {
-        std::size_t i = 0;
-        if (str[0] == '+' || str[0] == '-') {
-            ++i;
-        }
-        bool has_digit = false, has_point = false;
-        for (; str[i]; ++i) {
-            if (std::isdigit(str[i])) {
-                has_digit = true;
-            } else if (str[i] == '.') {
-                if (has_point) {
-                    return false;
-                }
-                has_point = true;
-            } else {
-                return false;
-            }
-        }
-        if (!has_digit) {
-            return false;
-        }
-        return true;
-    }
-
-    bool is_interger_string(const char *str) {
-        std::size_t i = 0;
-        if (str[0] == '+' || str[0] == '-') {
-            ++i;
-        }
-        for (; str[i]; ++i)
-            if (!std::isdigit(str[i]))
-                return false;
-        return true;
-    }
 
     bool check_arg(const std::string &type, const std::string &arg) {
         std::vector<std::regex> patterns;
@@ -83,8 +49,8 @@ namespace CrazyDave {
         } else if (type == "Quantity" || type == "Count") {
             patterns.emplace_back("\\d{1,10}");
         } else if (type == "Price" || type == "TotalCost") {
-            patterns.emplace_back(R"(^(?=.{1,13}$)-?\d*(\.\d*)?$)");
-            patterns.emplace_back("^(?!-?\\.$).*$"); // 排除.和-.
+            patterns.emplace_back(R"(^(?=.{1,13}$)\d*(\.\d*)?$)");
+            patterns.emplace_back("^(?!\\.$).*$"); // 排除.
         }
         for (auto &p: patterns) {
             if (!std::regex_match(arg, p)) {
@@ -223,6 +189,7 @@ namespace CrazyDave {
             for (auto &arg: args) {
                 if (std::regex_match(arg, std::regex{"^-ISBN=.*"})) {
                     if (us.count("ISBN")) {
+//                        assert(false);
                         return false;
                     }
                     if (!check_arg("ISBN", arg.substr(6))) {

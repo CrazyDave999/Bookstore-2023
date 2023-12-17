@@ -15,7 +15,7 @@ namespace CrazyDave {
         }
     }
 
-    Book::Book() {}
+    Book::Book() = default;
 
     Book::Book(const Book &rhs) : ISBN(rhs.ISBN), name(rhs.name), author(rhs.author), kw_num(rhs.kw_num),
                                   price(rhs.price),
@@ -73,22 +73,20 @@ namespace CrazyDave {
 
     BookSystem::BookSystem() : System() {}
 
-    bool BookSystem::show(const std::vector<const char *> &args) {
+    bool BookSystem::show(const std::vector<std::string> &args) {
         // 仅有一种有效
         if (!check_privilege(1))return false;
         if (args.size() > 1)return false;
         if (!args.empty()) {
-            auto sp_arr = split(args[0], "=\"");
-            String<10> op(sp_arr[0]);
-            if (op == "-ISBN") {
-                auto arr = ISBN_list.find(sp_arr[1]);
+            if (std::regex_match(args[0], std::regex{"^-ISBN=.*"})) {
+                auto arr = ISBN_list.find(args[0].substr(6).c_str());
                 if (arr.empty()) {
                     std::cout << '\n';
                 } else {
                     std::cout << arr[0];
                 }
-            } else if (op == "-name") {
-                auto arr = name_list.find(sp_arr[1]);
+            } else if (std::regex_match(args[0], std::regex{R"(^-name=".*"$)"})) {
+                auto arr = name_list.find(args[0].substr(7, args[0].length() - 8).c_str());
                 if (arr.empty()) {
                     std::cout << '\n';
                 } else {
@@ -97,8 +95,8 @@ namespace CrazyDave {
                         std::cout << book;
                     }
                 }
-            } else if (op == "-author") {
-                auto arr = author_list.find(sp_arr[1]);
+            } else if (std::regex_match(args[0], std::regex{R"(^-author=".*"$)"})) {
+                auto arr = author_list.find(args[0].substr(9, args[0].length() - 10).c_str());
                 if (arr.empty()) {
                     std::cout << '\n';
                 } else {
@@ -107,8 +105,8 @@ namespace CrazyDave {
                         std::cout << book;
                     }
                 }
-            } else if (op == "-keyword") {
-                auto arr = keyword_list.find(sp_arr[1]);
+            } else if (std::regex_match(args[0], std::regex{R"(^-keyword=".*"$)"})) {
+                auto arr = keyword_list.find(args[0].substr(10, args[0].length() - 11).c_str());
                 if (arr.empty()) {
                     std::cout << '\n';
                 } else {
@@ -122,7 +120,7 @@ namespace CrazyDave {
             auto arr = ISBN_list.find_all();
             if (arr.empty()) {
                 std::cout << '\n';
-            }else {
+            } else {
                 for (auto &book: arr) {
                     std::cout << book;
                 }
@@ -158,37 +156,34 @@ namespace CrazyDave {
         return true;
     }
 
-    bool BookSystem::modify(const std::vector<const char *> &args) {
+    bool BookSystem::modify(const std::vector<std::string> &args) {
         if (!check_privilege(3))return false;
         if (!is_selected())return false;
-//        if (args.empty())return false;
         auto ISBN = get_current_select();
         auto arr = ISBN_list.find(ISBN);
-        if (arr.empty())return false;
+//        if (arr.empty())return false;
         auto &book = arr[0];
-        String<21> pISBN("$");
-        String<61> name("$");
-        String<61> author("$");
-        String<61> keywords("$");
-        double price = 0;
+        std::string pISBN;
+        std::string name;
+        std::string author;
+        std::string keywords;
+        double price = -1;
         for (auto &arg: args) {
-            auto sp_arr = split(arg, "=\"");
-            String<10> op(sp_arr[0]);
-            if (op == "-ISBN") {
-                if (book.ISBN != sp_arr[1]) pISBN = sp_arr[1];
+            if (std::regex_match(arg, std::regex{"^-ISBN=.*"})) {
+                if (ISBN != arg.substr(6).c_str()) pISBN = arg.substr(6);
                 else return false;
-            } else if (op == "-name") {
-                name = sp_arr[1];
-            } else if (op == "-author") {
-                author = sp_arr[1];
-            } else if (op == "-keyword") {
-                keywords = sp_arr[1];
-            } else if (op == "-price") {
-                price = strtod(sp_arr[1], nullptr);
+            } else if (std::regex_match(arg, std::regex{R"(^-name=".*"$)"})) {
+                name = arg.substr(7, arg.length() - 8);
+            } else if (std::regex_match(arg, std::regex{R"(^-author=".*"$)"})) {
+                author = arg.substr(9, arg.length() - 10);
+            } else if (std::regex_match(arg, std::regex{R"(^-keyword=".*"$)"})) {
+                keywords = arg.substr(10, arg.length() - 11);
+            } else if (std::regex_match(arg, std::regex{"^-price=.*"})) {
+                price = std::stod(arg.substr(7), nullptr);
             }
         }
-        if (pISBN != "$") {
-            auto parr = ISBN_list.find(pISBN);
+        if (!pISBN.empty()) {
+            auto parr = ISBN_list.find(pISBN.c_str());
             if (!parr.empty()) {
                 return false; // 冲突
             }
@@ -203,19 +198,20 @@ namespace CrazyDave {
 //        }
 
         remove_book(book);
-        if (pISBN != "$") {
-            change_all(book.ISBN, pISBN);
+        if (!pISBN.empty()) {
+            std::string old(book.ISBN.c_str());
+            change_all(old, pISBN);
             book.ISBN = pISBN;
         }
-        if (name != "$")book.name = name;
-        if (author != "$")book.author = author;
-        if (keywords != "$") {
+        if (!name.empty())book.name = name;
+        if (!author.empty())book.author = author;
+        if (!keywords.empty()) {
             book.kw_num = 0;
-            for (auto str: kw_vec) {
+            for (auto &str: kw_vec) {
                 book.keywords[book.kw_num++] = str;
             }
         }
-        if (price != 0)book.price = price;
+        if (price != -1)book.price = price;
         insert_book(book);
         return true;
     }

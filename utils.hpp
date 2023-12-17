@@ -12,6 +12,7 @@
 #include <list>
 #include <regex>
 #include <unordered_set>
+#include <cassert>
 
 namespace CrazyDave {
     template<size_t len>
@@ -24,12 +25,20 @@ namespace CrazyDave {
             strcpy(str, s);
         }
 
+        String(const std::string &s) {
+            strcpy(str, s.c_str());
+        }
+
         explicit operator const char *() {
             return str;
         }
 
         operator const std::string() {
             return std::move(std::string(str));
+        }
+
+        const char *c_str() {
+            return str;
         }
 
         char &operator[](int pos) {
@@ -81,10 +90,6 @@ namespace CrazyDave {
     std::vector<const char *> split(const char *str, const char *del);
 
     std::vector<std::string> split(const std::string &str, const std::string &delimiter);
-
-    bool is_numeric_string(const char *str);
-
-    bool is_interger_string(const char *str);
 
     bool check_arg(const std::string &type, const std::string &arg);
 

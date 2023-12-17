@@ -16,7 +16,7 @@ namespace CrazyDave {
 
     class BookSystem;
 
-    void change_all(String<21> &old_ISBN, String<21> &new_ISBN);
+    void change_all(std::string &old_ISBN, std::string &new_ISBN);
 
     class Book {
         friend CrazyDave::BookSystem;
@@ -24,10 +24,10 @@ namespace CrazyDave {
         String<21> ISBN;
         String<61> name;
         String<61> author;
-        int kw_num;
+        int kw_num{};
         String<61> keywords[31];
-        double price;
-        int stock;
+        double price{};
+        long long stock{};
     public:
         Book();
 
@@ -69,13 +69,13 @@ namespace CrazyDave {
     public:
         BookSystem();
 
-        bool show(const std::vector<const char *> &args);
+        bool show(const std::vector<std::string> &args);
 
         std::pair<bool, double> buy(const char *ISBN, int quantity);
 
         bool select(const char *ISBN);
 
-        bool modify(const std::vector<const char *> &args);
+        bool modify(const std::vector<std::string> &args);
 
         bool import(int quantity, double total_cost);
     };

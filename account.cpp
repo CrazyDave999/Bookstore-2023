@@ -3,7 +3,7 @@
 namespace CrazyDave {
     std::vector<std::pair<Account, CrazyDave::String<21>>> login_stack;
 
-    void change_all(String<21> &old_ISBN, String<21> &new_ISBN) {
+    void change_all(std::string &old_ISBN, std::string &new_ISBN) {
         for (auto &pr: login_stack) {
             if (pr.second == old_ISBN) {
                 pr.second = new_ISBN;
@@ -14,7 +14,9 @@ namespace CrazyDave {
     Account::Account(const char *_user_id, const char *_password, int _privilege, const char *_user_name)
             : user_id(_user_id), password(_password), privilege(_privilege), user_name(_user_name) {}
 
-    Account::Account() : user_id("$"), password("$"), privilege(0), user_name("$") {}
+    Account::Account() : user_id(""), password(""), privilege(0), user_name("") {
+
+    }
 
     bool Account::check_password(const char *_password) {
         return password == _password;

@@ -19,7 +19,7 @@ namespace CrazyDave {
 
     class Account;
 
-    void change_all(String<21> &old_ISBN, String<21> &new_ISBN);
+    void change_all(std::string &old_ISBN, std::string &new_ISBN);
 
     bool check_privilege(int);
 

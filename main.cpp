@@ -79,7 +79,7 @@ int main() {
                         flag = lsys.show_finance(std::stoi(args[1]));
                     }
                 } else {
-                    flag = bsys.show(args);
+                    flag = bsys.show(str_args);
                 }
             } else if (op == "buy") {
                 auto pr = bsys.buy(args[0], std::stoi(args[1]));
@@ -90,7 +90,7 @@ int main() {
             } else if (op == "select") {
                 flag = bsys.select(args[0]);
             } else if (op == "modify") {
-                flag = bsys.modify(args);
+                flag = bsys.modify(str_args);
             } else if (op == "import") {
                 flag = bsys.import(std::stoi(args[0]), std::stod(args[1]));
             }
