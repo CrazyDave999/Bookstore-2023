@@ -77,16 +77,21 @@ namespace CrazyDave {
         // 仅有一种有效
         if (!check_privilege(1))return false;
         if (args.size() > 1)return false;
+        std::string msg;
         if (!args.empty()) {
             if (std::regex_match(args[0], std::regex{"^-ISBN=.*"})) {
-                auto arr = ISBN_list.find(args[0].substr(6).c_str());
+                auto ISBN = args[0].substr(6);
+                auto arr = ISBN_list.find(ISBN.c_str());
                 if (arr.empty()) {
                     std::cout << '\n';
                 } else {
                     std::cout << arr[0];
                 }
+                msg += "ISBN: ";
+                msg += ISBN;
             } else if (std::regex_match(args[0], std::regex{R"(^-name=".*"$)"})) {
-                auto arr = name_list.find(args[0].substr(7, args[0].length() - 8).c_str());
+                auto name = args[0].substr(7, args[0].length() - 8);
+                auto arr = name_list.find(name.c_str());
                 if (arr.empty()) {
                     std::cout << '\n';
                 } else {
@@ -95,8 +100,11 @@ namespace CrazyDave {
                         std::cout << book;
                     }
                 }
+                msg += "name: ";
+                msg += name;
             } else if (std::regex_match(args[0], std::regex{R"(^-author=".*"$)"})) {
-                auto arr = author_list.find(args[0].substr(9, args[0].length() - 10).c_str());
+                auto author = args[0].substr(9, args[0].length() - 10);
+                auto arr = author_list.find(author.c_str());
                 if (arr.empty()) {
                     std::cout << '\n';
                 } else {
@@ -105,8 +113,11 @@ namespace CrazyDave {
                         std::cout << book;
                     }
                 }
+                msg += "author: ";
+                msg += author;
             } else if (std::regex_match(args[0], std::regex{R"(^-keyword=".*"$)"})) {
-                auto arr = keyword_list.find(args[0].substr(10, args[0].length() - 11).c_str());
+                auto keyword = args[0].substr(10, args[0].length() - 11);
+                auto arr = keyword_list.find(keyword.c_str());
                 if (arr.empty()) {
                     std::cout << '\n';
                 } else {
@@ -115,6 +126,8 @@ namespace CrazyDave {
                         std::cout << book;
                     }
                 }
+                msg += "keyword: ";
+                msg += keyword;
             }
         } else {
             auto arr = ISBN_list.find_all();
@@ -125,7 +138,9 @@ namespace CrazyDave {
                     std::cout << book;
                 }
             }
+            msg += "all";
         }
+        core->l_sys->add_log(is_employee(), 1, current_user_id(), 6, "", msg);
         return true;
     }
 
@@ -136,11 +151,20 @@ namespace CrazyDave {
         if (arr.empty())return {false, 0};
         auto &book = arr[0];
         if (book.stock < quantity)return {false, 0};
+
+        std::string msg;
+        msg += "quantity: ";
+        msg += std::to_string(quantity);
+
         remove_book(book);
         book.stock -= quantity;
         insert_book(book);
         double val = quantity * book.price;
+        msg += ", cost: ";
+        msg += std::to_string(val);
         core->l_sys->add_value(val);
+        core->l_sys->add_finance_log(get_current_account().user_id, ISBN, 0, quantity, val);
+        core->l_sys->add_log(is_employee(), 1, current_user_id(), 7, ISBN, msg);
         return {true, val};
     }
 
@@ -148,11 +172,15 @@ namespace CrazyDave {
         if (!check_privilege(3))return false;
         get_current_select() = ISBN;
 
+        std::string msg;
+
         auto arr = ISBN_list.find(ISBN);
         if (arr.empty()) {
             Book book(ISBN, "", "", "", 0);
             insert_book(book);
+            msg += "new book created";
         }
+        core->l_sys->add_log(is_employee(), 1, current_user_id(), 8, ISBN, msg);
         return true;
     }
 
@@ -188,30 +216,69 @@ namespace CrazyDave {
                 return false; // 冲突
             }
         }
-//        std::unordered_set<std::string> us;
         auto kw_vec = split(keywords, "|");
-//        for (auto &str: kw_vec) {
-//            if (us.count(str)) {
-//                return false; // 重复
-//            }
-//            us.insert(str);
-//        }
 
         remove_book(book);
         if (!pISBN.empty()) {
             std::string old(book.ISBN.c_str());
             change_all(old, pISBN);
             book.ISBN = pISBN;
+            std::string msg;
+            msg += old;
+            msg += " -> ";
+            msg += pISBN;
+            core->l_sys->add_log(is_employee(), 1, current_user_id(), 9, ISBN.c_str(), msg);
         }
-        if (!name.empty())book.name = name;
-        if (!author.empty())book.author = author;
+        if (!name.empty()) {
+            std::string msg;
+            msg += book.name;
+            msg += " -> ";
+            msg += name;
+            book.name = name;
+            core->l_sys->add_log(is_employee(), 1, current_user_id(), 10, ISBN.c_str(), msg);
+        }
+        if (!author.empty()) {
+            std::string msg;
+            msg += book.author;
+            msg += " -> ";
+            msg += author;
+            book.author = author;
+            core->l_sys->add_log(is_employee(), 1, current_user_id(), 11, ISBN.c_str(), msg);
+
+        }
         if (!keywords.empty()) {
+            std::string msg;
+            for (int i = 0; i < book.kw_num - 1; ++i) {
+                msg += book.keywords[i];
+                msg += '|';
+            }
+            if (book.kw_num > 0) {
+                msg += book.keywords[book.kw_num - 1];
+            }
+            msg += " -> ";
+
             book.kw_num = 0;
             for (auto &str: kw_vec) {
                 book.keywords[book.kw_num++] = str;
             }
+
+            for (int i = 0; i < book.kw_num - 1; ++i) {
+                msg += book.keywords[i];
+                msg += '|';
+            }
+            if (book.kw_num > 0) {
+                msg += book.keywords[book.kw_num - 1];
+            }
+            core->l_sys->add_log(is_employee(), 1, current_user_id(), 12, ISBN.c_str(), msg);
         }
-        if (price != -1)book.price = price;
+        if (price != -1) {
+            std::string msg;
+            msg += std::to_string(book.price);
+            msg += " -> ";
+            msg += std::to_string(price);
+            book.price = price;
+            core->l_sys->add_log(is_employee(), 1, current_user_id(), 13, ISBN.c_str(), msg);
+        }
         insert_book(book);
         return true;
     }
@@ -225,7 +292,15 @@ namespace CrazyDave {
         remove_book(book);
         book.stock += quantity;
         insert_book(book);
+
+        std::string msg;
+        msg += "quantity: ";
+        msg += std::to_string(quantity);
+        msg += ", total cost: ";
+        msg += std::to_string(total_cost);
         core->l_sys->add_value(-total_cost);
+        core->l_sys->add_finance_log(get_current_account().user_id, get_current_select(), 1, quantity, total_cost);
+        core->l_sys->add_log(is_employee(), 1, current_user_id(), 14, get_current_select().c_str(), msg);
         return true;
     }
 }

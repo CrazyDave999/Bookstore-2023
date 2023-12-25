@@ -1,6 +1,8 @@
 #include "utils.hpp"
 
 namespace CrazyDave {
+    wchar_t special[]{0x00B7, 0x2014, 0xFF08, 0xFF09, 0xFF1A};
+
     std::vector<const char *> split(const char *str, const char *del) {
         std::vector<const char *> res{};
         char tmp[strlen(str) + 1];
@@ -30,6 +32,113 @@ namespace CrazyDave {
         return std::move(tokens);
     }
 
+    std::vector<std::wstring> split(const std::wstring &str, const std::wstring &delimiter) {
+        std::vector<std::wstring> tokens;
+        std::size_t start = 0;
+        std::size_t end = str.find(delimiter);
+
+        while (end != std::wstring::npos) {
+            tokens.push_back(str.substr(start, end - start));
+            start = end + delimiter.length();
+            end = str.find(delimiter, start);
+        }
+
+        tokens.push_back(str.substr(start));
+
+        return std::move(tokens);
+    }
+
+    std::wstring parse_utf8(const std::string &str) {
+        std::size_t i = 0;
+        std::wstring wstr;
+        for (; i < str.length(); ++i) {
+            char byte = str[i];
+            wchar_t ubyte = 0;
+            int num = 0;
+
+            if ((byte & 0x80) == 0) {
+                // ASCII 字符，1 字节
+                ubyte = byte;
+                num = 1;
+            } else if ((byte & 0xE0) == 0xC0) {
+                // 2 字节字符
+                ubyte = byte & 0x1F;
+                num = 2;
+            } else if ((byte & 0xF0) == 0xE0) {
+                // 3 字节字符
+                ubyte = byte & 0x0F;
+                num = 3;
+            }
+
+            // 处理多字节字符的其他字节
+            for (int j = 1; j < num; ++j) {
+                byte = str[++i];
+                ubyte = (ubyte << 6) | (byte & 0x3F);
+            }
+            wstr.push_back(ubyte);
+        }
+        return std::move(wstr);
+    }
+
+    bool chk_nm_au(const std::string &arg) {
+        auto wstr = parse_utf8(arg);
+        if (wstr.empty() || wstr.length() > 60)
+            return false;
+        for (auto &c: wstr) {
+            if (c == 0x20 || c == 0x21 || (c >= 0x23 && c <= 0x7E) || (c >= 0x4E00 && c <= 0x9FFF)) {
+                continue;
+            }
+            bool flag = false;
+            for (auto &sp: special) {
+                if (c == sp) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool chk_kw(const std::string &arg) {
+        auto wstr = parse_utf8(arg);
+        auto len = wstr.length();
+        if (wstr.empty() || wstr.length() > 60)
+            return false;
+        if (wstr[0] == '|' || wstr[len - 1] == '|')
+            return false;
+        for (int i = 0; i < len; ++i) {
+            wchar_t c = wstr[i];
+            if (c == '|' && i < len - 1 && wstr[i + 1] == '|') {
+                return false;
+            }
+            if (c == 0x20 || c == 0x21 || (c >= 0x23 && c <= 0x7E) || (c >= 0x4E00 && c <= 0x9FFF)) {
+                continue;
+            }
+            bool flag = false;
+            for (auto &sp: special) {
+                if (c == sp) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) {
+                return false;
+            }
+        }
+        std::unordered_set<std::wstring> us;
+        auto arr = split(wstr, std::wstring{'|'});
+        for (auto &x: arr) {
+            if (us.count(x)) {
+                return false;
+            }
+            us.insert(x);
+        }
+
+        return true;
+    }
 
     bool check_arg(const std::string &type, const std::string &arg) {
         std::vector<std::regex> patterns;
@@ -42,10 +151,12 @@ namespace CrazyDave {
         } else if (type == "ISBN") {
             patterns.emplace_back("[\\x20-\\x7E]{1,20}");
         } else if (type == "BookName" || type == "Author") {
-            patterns.emplace_back(R"([\x20-\x21\x23-\x7E]{1,60})");
+//            patterns.emplace_back(R"([\x20-\x21\x23-\x7E]{1,60})");
+            return chk_nm_au(arg);
         } else if (type == "Keyword") {
-            patterns.emplace_back(R"([\x20-\x21\x23-\x7E]{1,60})");
-            patterns.emplace_back(R"(([^\|]+\|)*[^\|]+)");
+//            patterns.emplace_back(R"([\x20-\x21\x23-\x7E]{1,60})");
+//            patterns.emplace_back(R"(([^\|]+\|)*[^\|]+)");
+            return chk_kw(arg);
         } else if (type == "Quantity" || type == "Count") {
             patterns.emplace_back("\\d{1,10}");
         } else if (type == "Price" || type == "TotalCost") {
@@ -57,16 +168,16 @@ namespace CrazyDave {
                 return false;
             }
         }
-        if (type == "Keyword") {
-            std::unordered_set<std::string> us;
-            auto arr = split(arg, "|");
-            for (auto &x: arr) {
-                if (us.count(x)) {
-                    return false;
-                }
-                us.insert(x);
-            }
-        }
+//        if (type == "Keyword") {
+//            std::unordered_set<std::string> us;
+//            auto arr = split(arg, "|");
+//            for (auto &x: arr) {
+//                if (us.count(x)) {
+//                    return false;
+//                }
+//                us.insert(x);
+//            }
+//        }
         return true;
     }
 
@@ -238,6 +349,18 @@ namespace CrazyDave {
             } else if (!check_arg("Quantity", args[0]) || !check_arg("TotalCost", args[1])) {
                 return false;
             }
+        } else if (op == "report") {
+            if (args.size() != 1) {
+                return false;
+            } else if (args[0] != "finance" && args[0] != "employee") {
+                return false;
+            }
+        } else if (op == "log") {
+            if (!args.empty()) {
+                return false;
+            }
+        } else if (op == "$get_account") {
+            return true;
         } else {
             return false;
         }

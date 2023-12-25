@@ -7,12 +7,12 @@
 #include "log.hpp"
 #include "core.hpp"
 
-using namespace CrazyDave;
 
-AccountSystem asys;
-BookSystem bsys;
-LogSystem lsys;
-Core core(&asys, &bsys, &lsys);
+
+CrazyDave::AccountSystem asys;
+CrazyDave::BookSystem bsys;
+CrazyDave::LogSystem lsys;
+CrazyDave::Core core(&asys, &bsys, &lsys);
 
 int main() {
     asys.load_core(&core);
@@ -44,7 +44,7 @@ int main() {
         }
 
         bool flag = false;
-        if (!check_input(op, str_args)) {
+        if (!CrazyDave::check_input(op, str_args)) {
             flag = false;
         } else {
             if (op == "exit" || op == "quit") {
@@ -93,11 +93,23 @@ int main() {
                 flag = bsys.modify(str_args);
             } else if (op == "import") {
                 flag = bsys.import(std::stoi(args[0]), std::stod(args[1]));
+            } else if (op == "report") {
+                if (str_args[0] == "finance") {
+                    flag = lsys.report_finance();
+                } else if (str_args[0] == "employee") {
+                    flag = lsys.report_employee();
+                }
+            } else if (op == "log") {
+                flag = lsys.log();
+            } else if (op == "$get_account") {
+                flag = CrazyDave::AccountSystem::get_account();
             }
         }
         if (!flag) {
-//            std::cout << "Invalid " << line << "\n";
+//            std::cout << "Invalid " << line << "\n"; // debug
             std::cout << "Invalid\n";
+        } else {
+            std::cout << "Success\n";
         }
     }
     return 0;

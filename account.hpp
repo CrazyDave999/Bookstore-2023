@@ -9,6 +9,7 @@
 #include <vector>
 #include "Blocklist/blocklist.hpp"
 #include "core.hpp"
+#include "log.hpp"
 
 
 namespace CrazyDave {
@@ -17,22 +18,25 @@ namespace CrazyDave {
 
     class AccountSystem;
 
+    class BookSystem;
+
     class Account;
 
     void change_all(std::string &old_ISBN, std::string &new_ISBN);
 
-    bool check_privilege(int);
+    bool is_employee();
 
-    Account &get_current_account();
-
-    CrazyDave::String<21> &get_current_select();
-
-    bool is_selected();
+    String<31> current_user_id();
 
     class Account {
         friend AccountSystem;
+        friend BookSystem;
 
         friend bool check_privilege(int);
+
+        friend String<31> current_user_id();
+
+        friend bool is_employee();
 
     private:
         CrazyDave::String<31> user_id;
@@ -62,8 +66,8 @@ namespace CrazyDave {
 
     class AccountSystem : public System {
     private:
-//        CrazyDave::BlockList<CrazyDave::String<31>, Account> blockList{"tmp/account_index", "tmp/account_data"};
-        CrazyDave::BlockList<CrazyDave::String<31>, Account> blockList{"account_index", "account_data"};
+        CrazyDave::BlockList<CrazyDave::String<31>, Account> blockList{"./tmp/account_index", "./tmp/account_data"};
+//        CrazyDave::BlockList<CrazyDave::String<31>, Account> blockList{"account_index", "account_data"};
     public:
         AccountSystem();
 
@@ -78,10 +82,11 @@ namespace CrazyDave {
         bool register_account(const char *user_id, const char *password, const char *user_name);
 
         bool remove(const char *user_id);
+
+        static bool get_account(); // 调试模式函数
     };
 
 
-#endif //BOOKSTORE_2023_ACCOUNT_HPP
-
 }
 
+#endif //BOOKSTORE_2023_ACCOUNT_HPP

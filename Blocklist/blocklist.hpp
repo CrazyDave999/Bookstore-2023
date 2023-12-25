@@ -95,12 +95,13 @@ namespace CrazyDave {
         int max_pos{};
         int total{};
         const size_t SIZE_OF_NODE = sizeof(node);
-        static const int MAX_SIZE = 200;
-//        const int MIN_SIZE = 200;
+        static const int MAX_SIZE = 511;
+        const int MIN_SIZE = 256;
+        const int MERGE_SIZE = 480;
         const size_t SIZE_OF_PAIR = sizeof(pair);
 
         using iterator = typename std::list<node>::iterator;
-        using block = pair[MAX_SIZE];
+        using block = pair[MAX_SIZE + 1];
 
         block block_cache1;
         block block_cahce2;
@@ -144,7 +145,7 @@ namespace CrazyDave {
             }
             itr->size = ++size;
             ++total;
-            if (itr->size < MAX_SIZE - 1) {
+            if (itr->size <= MAX_SIZE) {
                 write_node(itr, bk);
             } else {
                 // 裂块
@@ -175,7 +176,13 @@ namespace CrazyDave {
             }
             itr->size = --size;
             --total;
-            write_node(itr, bk);
+            if (itr->size >= MIN_SIZE) {
+                write_node(itr, bk);
+            } else {
+                if (!merge(itr, bk)) {
+                    write_node(itr, bk);
+                }
+            }
         }
 
         void destroy(iterator itr) {
@@ -198,6 +205,43 @@ namespace CrazyDave {
             itr->size = size1;
             itr->max = cur[size1 - 1];
             write_node(itr, cur);
+        }
+
+        bool merge(iterator itr, block &cur) {
+            if (itr != list.begin()) {
+//                iterator prev = itr;
+//                --prev;
+                iterator prev(itr._M_node->_M_prev);
+                if (prev->size + itr->size <= MERGE_SIZE) {
+                    block &tmp = block_cahce2;
+                    read_node(prev, tmp);
+                    merge(prev, tmp, itr, cur);
+                    return true;
+                }
+            }
+            if (itr != --list.end()) {
+//                iterator next = itr;
+//                ++next;
+                iterator next(itr._M_node->_M_next);
+                if (next->size + itr->size <= MERGE_SIZE) {
+                    block &tmp = block_cahce2;
+                    read_node(next, tmp);
+                    merge(itr, cur, next, tmp);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        void merge(iterator first, block &bk1, iterator second, block &bk2) {
+            // copy bk2 to bk1, destroy bk2
+            for (int i = 0; i < second->size; ++i) {
+                bk1[first->size + i] = bk2[i];
+            }
+            first->size += second->size;
+            first->max = second->max;
+            destroy(second);
+            write_node(first, bk1);
         }
 
     public:
