@@ -95,6 +95,7 @@ namespace CrazyDave {
 
     bool check_input(const std::string &op, const std::vector<std::string> &args);
 
+    std::wstring parse_utf8(const std::string &str);
 
     using std::fstream;
 
